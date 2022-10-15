@@ -45,6 +45,12 @@ jobs:
 
       - name: Build
         run: npm run build:prod
+        
+        # Upload the artifact to be used in next job
+      - uses: actions/upload-artifact@v2
+        with:
+          name: build-artifact
+          path: _build
 
   # Deployment job
   deploy:
