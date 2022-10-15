@@ -65,11 +65,6 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
-       # Download the artifact from previous job
-      - uses: actions/download-artifact@v3
-        with:
-          name: code-coverage-report
-          path: output/test/code-coverage.html
       # Deploy it to Github pages
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4.3.0
