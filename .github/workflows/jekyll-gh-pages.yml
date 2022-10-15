@@ -49,8 +49,10 @@ jobs:
         # Upload the artifact to be used in next job
       - uses: actions/upload-artifact@v2
         with:
-          name: build-artifact
-          path: _build
+           name: dist-without-markdown
+           path: |
+            dist
+            !dist/**/*.md
 
   # Deployment job
   deploy:
@@ -66,8 +68,8 @@ jobs:
        # Download the artifact from previous job
       - uses: actions/download-artifact@v3
         with:
-          name: build-artifact
-          path: _build
+          name: code-coverage-report
+          path: output/test/code-coverage.html
       # Deploy it to Github pages
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4.3.0
