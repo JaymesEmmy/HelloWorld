@@ -6,30 +6,81 @@ on:
     - main
 
 jobs:
-  deploy:
+
+  rendering:
+    name: Dynamic rendering
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v2
+    # Checkout from main
+    - name: Checkout current repository to Master branch
+      uses: actions/checkout@v1
+    # Setup Node version
+    - name: Setup NodeJs 16.x
+      uses: actions/setup-node@v1
       with:
-        node-version: '16'
-
+        node-version: '16.x'
+    # Cache the node_module to avoid build explosion
+    - name: Cache dependencies and build outputs to improve workflow execution time.
+      uses: actions/cache@v1
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-js-${{ hashFiles('package-lock.json') }}
+    # Install dependencies for dynamic rendering
     - name: Install dependencies
       run: npm install
-
-    - name: Run tests
-      run: npm run test:headless
-
-    - name: Build
-      run: npm run build:prod
-
-    - name: Deploy
-      if: success()
-      uses: peaceiris/actions-gh-pages@v3
+    # Generate the README.md file
+    - name: Generate README.md file
+      run: node .github/dynamic-rendering/render.js
+    - name: Commit and Push new README.md to the repository
+      uses: actions-js/push@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: dist/angular-github-actions
-        enable_jekyll: true
+        
+        
+  build:
+    # Deploy only if build succeeded
+    needs: [rendering]
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    # Checkout from main
+    - uses: actions/checkout@v2
+    # Set the agent to run Python 3.10
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    # Install prerequisites
+    - name: Install requirements
+      run: pip install -r requirements.txt
+    # Build web project using jupyter-book
+    - name: Build Jupyter-Book
+      run: jupyter-book build .
+    # Copy iframes where we want to have iframes
+    - name: Copy iframes from compiled notebooks to website
+      run: python .github/scripts/copy_iframes.py . docs/
+    # Upload the artifact to be used in next job
+    - uses: actions/upload-artifact@v2
+      with:
+        name: build-artifact
+        path: _build
+
+  deploy: 
+    # Deploy only if build succeeded
+    needs: [build]
+
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+    # Checkout from main
+    - uses: actions/checkout@v2
+    # Download the artifact from previous job
+    - uses: actions/download-artifact@v3
+      with:
+        name: build-artifact
+        path: _build
+    # Deploy it to Github pages
+    - name: Deploy to GitHub Pages 🚀
+      uses: JamesIves/github-pages-deploy-action@v4.3.0
+      with:
+        branch: gh-pages
+        folder: div/hello-world
