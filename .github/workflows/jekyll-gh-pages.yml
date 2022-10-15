@@ -65,9 +65,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
-      # Deploy it to Github pages
-      - name: Deploy to GitHub Pages 🚀
-        uses: JamesIves/github-pages-deploy-action@v4.3.0
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          branch: gh-pages
-          folder: div/hello-world
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist/hello-world-test
